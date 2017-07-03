@@ -9,7 +9,6 @@ namespace PoeObjectsDebugPlugin
         public PoeObjectsDebugPlugin_Settings()
         {
             Enable = false;
-      
             ItemDebug = Keys.NumPad5;
         }
 

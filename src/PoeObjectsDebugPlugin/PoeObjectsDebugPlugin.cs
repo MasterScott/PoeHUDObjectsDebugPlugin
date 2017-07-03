@@ -109,7 +109,7 @@ namespace PoeObjectsDebugPlugin
             for (int i = 0; i < deph; ++i)
                 prefix += DIVIDER;
 
-            var props = type.GetProperties();//typeDatabaseSearchFlags
+            var props = type.GetProperties();
 
             foreach (var prop in props)
             {

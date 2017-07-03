@@ -1,0 +1,8 @@
+Owner: Stridemann
+Name: PoeHUDObjectsDebugPlugin
+Repository
+
+Ignore:
+src
+.gitignore
+LICENSE

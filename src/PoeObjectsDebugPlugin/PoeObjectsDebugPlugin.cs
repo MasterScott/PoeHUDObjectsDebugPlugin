@@ -58,15 +58,14 @@ namespace PoeObjectsDebugPlugin
                     var item = inventItem.Item;
 
                     if (item != null)
+                    {
                         DebugItem(item);
+
+                        var path = Path.Combine(PluginDirectory, "_ItemDebugInfo.txt");
+                        File.WriteAllText(path, string.Join(Environment.NewLine, ItemDebugLines.ToArray()).Replace(DIVIDER, "\t"));
+                    }
                 }
-
-
-                var path = Path.Combine(PluginDirectory, "_ItemDebugInfo.txt");
-
-                File.WriteAllText(path, string.Join(Environment.NewLine, ItemDebugLines.ToArray()).Replace(DIVIDER, "\t"));
             }
-      
         }
 
         private void DebugItem(Entity itemEntity)

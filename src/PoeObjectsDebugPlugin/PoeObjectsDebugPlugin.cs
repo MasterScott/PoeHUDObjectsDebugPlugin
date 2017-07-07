@@ -5,12 +5,16 @@ using System.Linq;
 using System.Text;
 using PoeHUD.Plugins;
 using PoeHUD.Poe.Components;
+using PoeHUD.Poe.EntityComponents;
 using System.IO;
 using SharpDX;
 using SharpDX.Direct3D9;
 using PoeHUD.Poe;
 using PoeHUD.Poe.Elements;
 using System.Reflection;
+using PoeHUD.Poe.RemoteMemoryObjects;
+using PoeHUD.Poe.FilesInMemory;
+using PoeHUD.Models;
 
 namespace PoeObjectsDebugPlugin
 {
@@ -74,6 +78,16 @@ namespace PoeObjectsDebugPlugin
 
             var components = itemEntity.GetComponents();
             var game = GameController.Game;
+            ItemDebugLines.Add("ItemPath: " + itemEntity.Path);
+
+            BaseItemType BIT = GameController.Files.BaseItemTypes.Translate(itemEntity.Path);
+
+            if (BIT != null)
+            {
+                ItemDebugLines.Add("===== BaseItemTypeInfo: ======");
+                DebugProperty(typeof(BaseItemType), BIT, 1);
+                ItemDebugLines.Add("==============================");
+            }
 
             foreach (var component in components)
             {
@@ -83,6 +97,7 @@ namespace PoeObjectsDebugPlugin
                 if (!PoeHUDComponents.TryGetValue(component.Key, out compType))
                 {
                     ItemDebugLines.Add($"<{component.Key}> (Not implemented in PoeHUD)");
+                    ItemDebugLines.Add($"{DIVIDER}Address: {component.Value.ToString("x")}");
                     continue;
                 }
                 ItemDebugLines.Add($"<{component.Key}>:");
@@ -109,7 +124,6 @@ namespace PoeObjectsDebugPlugin
                 prefix += DIVIDER;
 
             var props = type.GetProperties();
-
             foreach (var prop in props)
             {
                 object value = null;
@@ -122,7 +136,21 @@ namespace PoeObjectsDebugPlugin
                 { Ex = ex; }
 
                 DrawProperty(value, deph, prefix, prop.Name, Ex);
+            }
 
+            var fields = type.GetFields();
+            foreach (var field in fields)
+            {
+                object value = null;
+                Exception Ex = null;
+                try
+                {
+                    value = field.GetValue(instance);
+                }
+                catch (Exception ex)
+                { Ex = ex; }
+
+                DrawProperty(value, deph, prefix, field.Name, Ex);
             }
         }
 
@@ -159,7 +187,7 @@ namespace PoeObjectsDebugPlugin
             }
             else if (propType.GetInterface("IEnumerable") != null)
             {
-                ItemDebugLines.Add($"{prefix}{propertyName} [{GetFullName(propType)}] :");
+                ItemDebugLines.Add($"{prefix}{propertyName} ({GetFullName(propType)}) :");
 
                 int index = 0;
                 foreach (var listitem in value as IEnumerable)
@@ -168,11 +196,31 @@ namespace PoeObjectsDebugPlugin
                     index++;
                 }
             }
-
             else if (propType.IsClass)
             {
                 ItemDebugLines.Add($"{prefix}{propertyName} : ");
                 DebugProperty(propType, value, deph + 1);
+
+                if (Settings.TranslateModsFromFiles.Value)
+                {
+                    if (propType == typeof(ItemMod))
+                    {
+                        var rawNameProp = propType.GetProperty("RawName");
+
+                        if (rawNameProp != null)//Should be never null
+                        {
+                            string rawName = (string)rawNameProp.GetValue(value);
+                            ModsDat.ModRecord record;
+
+                            if (GameController.Files.Mods.records.TryGetValue(rawName, out record))
+                            {
+                                ItemDebugLines.Add($"{prefix}=== ModRecord FromFiles : ===");
+                                DebugProperty(typeof(ModsDat.ModRecord), record, deph + 2);
+                                ItemDebugLines.Add($"{prefix}=============================");
+                            }
+                        }
+                    }
+                }
             }
             else
             {

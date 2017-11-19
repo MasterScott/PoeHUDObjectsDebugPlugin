@@ -106,9 +106,7 @@ namespace PoeObjectsDebugPlugin
                     var item = inventItem.Item;
 
                     if (item != null)
-                    {
                         DebugItem(item);
-                    }
                 }
             }
         }
